@@ -1,7 +1,7 @@
 CFLAGS = -Wall -Wextra -Werror
 CC = gcc
-SRC = $(wildcard src/*.c)
-OBJ = $(SRC:%.c=%.o)
+SRC = $(wildcard src/*.cpp)
+OBJ = $(SRC:%.cpp=%.o)
 NAME = scop
 INC = ./inc
 
