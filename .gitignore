@@ -1,0 +1,5 @@
+.ccls-cache
+.gitignore
+scop
+*.o
+*.a
