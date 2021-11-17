@@ -1,6 +1,7 @@
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror -fsanitize=address -g
 CC = gcc
-SRC = $(wildcard src/*.cpp)
+SRC = $(wildcard src/*.c)
+HEADERS = $(wildcard src/*.h)
 OBJ = $(SRC:%.cpp=%.o)
 NAME = scop
 INC = ./inc
@@ -12,7 +13,7 @@ INC = ./inc
 all : $(NAME)
 
 
-$(NAME) : $(LIBS) $(OBJ)
+$(NAME) : $(LIBS) $(OBJ)  $(HEADERS)
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME) -I $(INC)
 
 clean:
@@ -28,4 +29,4 @@ bonus: all
 run: $(NAME)
 	./$(NAME)
 
-.PHONY: all $(NAME) clean fclean re bonus run
+.PHONY: all clean fclean re bonus run

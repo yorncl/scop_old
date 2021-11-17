@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "obj.hpp"
-#include "parser.hpp"
+#include "obj.h"
+#include "parser.h"
 
 void print_usage()
 {
@@ -15,7 +15,8 @@ int main(int ac, char** av)
 		print_usage();
 		return 0;
 	}
-	int r = parser(av[0]);
+	int r = parse_file(av[1]);
 	if (r == EXIT_FAILURE)
 		return r;
+
 }

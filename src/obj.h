@@ -1,4 +1,4 @@
-#ifdef OBJ_HPP
+#ifdef OBJ_H
 
 #include <list>
 

@@ -1,5 +1,5 @@
 #ifndef PARSER_H
 
-	int parser(char* file);
+int parse_file(char* file);
 
 #endif // PARSER_H
