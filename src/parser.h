@@ -1,5 +1,7 @@
 #ifndef PARSER_H
 
-int parse_file(char* file);
+#include "obj.h"
+
+Obj* parse_file(char* file);
 
 #endif // PARSER_H

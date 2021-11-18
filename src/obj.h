@@ -1,22 +1,27 @@
-#ifdef OBJ_H
+#ifndef OBJ_H
 
-#include <list>
+#include "../lib/libft/libft.h"
 
-using namespace std;
-
-typedef struct v_st{
+typedef struct vertex_st{
 	double x;	
 	double y;	
 	double z;	
 	double w;	
-} v_st;	
+} vertex;	
 
+typedef struct face_st{
+	u_int64_t v1;	
+	u_int64_t v2;	
+	u_int64_t v3;	
+} face;	
 
-
-typedef obj_st
+typedef struct obj_st
 {
 	char *name;
-	list<vertex_st> vertices;
-} obj_st;
+	t_list* vertices;
+	t_list* faces;
+} Obj;
+
+void clear_obj();
 
 #endif

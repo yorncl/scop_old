@@ -2,9 +2,10 @@ CFLAGS = -Wall -Wextra -Werror -fsanitize=address -g
 CC = gcc
 SRC = $(wildcard src/*.c)
 HEADERS = $(wildcard src/*.h)
-OBJ = $(SRC:%.cpp=%.o)
+OBJ = $(SRC:%.c=%.o)
 NAME = scop
 INC = ./inc
+LIBFT = lib/libft/libft.a
 
 
 %.o: %.c
@@ -12,11 +13,16 @@ INC = ./inc
 
 all : $(NAME)
 
+$(LIBFT): 
+	$(MAKE) -C ./lib/libft
 
-$(NAME) : $(LIBS) $(OBJ)  $(HEADERS)
-	$(CC) $(CFLAGS) $(OBJ) -o $(NAME) -I $(INC)
+clean_libft: 
+	$(MAKE) -C ./lib/libft fclean
 
-clean:
+$(NAME) : $(LIBFT) $(OBJ)  $(HEADERS)
+	$(CC) $(CFLAGS) $(OBJ) $(LIBFT) -o $(NAME) -I $(INC)
+
+clean: clean_libft
 	$(RM) $(OBJ)
 
 fclean: clean
@@ -29,4 +35,4 @@ bonus: all
 run: $(NAME)
 	./$(NAME)
 
-.PHONY: all clean fclean re bonus run
+.PHONY: all clean fclean re bonus run libft
