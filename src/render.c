@@ -40,7 +40,7 @@ static int obj_to_vertex_data(Obj* obj, Context* ctx)
 		buff[i] = v->x;
 		buff[i + 1] = v->y;
 		buff[i + 2] = v->z;
-		i++;	
+		i += 3;	
 	}
 	ctx->vertex_data.content = buff;
 	ctx->vertex_data.size = nv * sizeof(GL_FLOAT) * 3;
@@ -64,7 +64,7 @@ static int obj_to_index_data(Obj* obj, Context* ctx)
 		buff[i] = f->v1;
 		buff[i + 1] = f->v2;
 		buff[i + 2] = f->v3;
-		i++;	
+		i += 3;	
 	}
 	ctx->index_data.content = buff;
 	ctx->index_data.size = nv * sizeof(GL_INT) * 3;
@@ -124,7 +124,7 @@ static int create_shader_program()
 		"layout(location = 0) in vec4 position;\n"
 		"\n"
 		"void main() {\n"
-		" gl_Position = position;\n"
+		" gl_Position = vec4(position.xyz, 1.0);\n"
 		"}\n";
 
 	char* fragment = 
@@ -144,6 +144,15 @@ static int create_shader_program()
 		glAttachShader(program, vs);
 		glAttachShader(program, fs);
 		glLinkProgram(program);
+
+		int success;
+		glGetProgramiv(program, GL_LINK_STATUS, &success);
+		if (!success) {
+			char infoLog[512]; // TODO change this 
+			glGetProgramInfoLog(program, 512, NULL, infoLog);
+			infoLog[511] = 0; // TODO very hacky
+			fprintf(stderr, "%s", infoLog);
+		}
 		glValidateProgram(program);
 		glUseProgram(program);
 	}
@@ -171,14 +180,16 @@ int render(Obj* obj)
 		return EXIT_FAILURE;
 	if(obj_to_index_data(obj, &ctx))
 		return EXIT_FAILURE;
+	
+	GLuint VertexArrayID;
+	glGenVertexArrays(1, &VertexArrayID);
+	glBindVertexArray(VertexArrayID);
 
 	glGenBuffers(1, &ctx.buff_vertex);
-
 	glBindBuffer(GL_ARRAY_BUFFER, ctx.buff_vertex);
 	glBufferData(GL_ARRAY_BUFFER, ctx.vertex_data.size, ctx.vertex_data.content, GL_STATIC_DRAW);
-
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
-	glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(0);
 	create_shader_program();
         render_loop(window);
 	clear_context(&ctx);

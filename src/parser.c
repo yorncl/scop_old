@@ -97,8 +97,8 @@ Obj* parse_file(char* filename)
 		if ((r = parse_line(ptr, lineNum, obj)) != EXIT_SUCCESS)	
 		{
 			clear_obj(obj);
-			obj = NULL;
-			break;
+			free(line);
+			return NULL;
 		}
 	}
 	free(line);
