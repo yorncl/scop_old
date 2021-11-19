@@ -1,9 +1,8 @@
 #include <stdio.h>
-#include "render.h"
-#include "../include/glad/glad.h"
-#include <GLFW/glfw3.h>
 #include <stdlib.h>
+#include <string.h>
 #include "shader.h"
+#include "render.h"
 
 static GLFWwindow* init_window()
 {
@@ -18,12 +17,14 @@ static void render_loop(GLFWwindow* window)
 {
 	while(!glfwWindowShouldClose(window))
 	{
-	    glfwSwapBuffers(window);
-	    glfwPollEvents();    
+		glClear(GL_COLOR_BUFFER_BIT);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glfwSwapBuffers(window);
+		glfwPollEvents();    
 	}
 }
 
-static int obj_to_vertex_buffer(Obj* obj, Context* ctx)
+static int obj_to_vertex_data(Obj* obj, Context* ctx)
 {
 	size_t nv = ft_lstsize(obj->vertices);
 	float* buff = ft_calloc(1, nv * sizeof(GL_FLOAT) * 3); // times 3 causes 3 float attribute per vertex
@@ -33,8 +34,7 @@ static int obj_to_vertex_buffer(Obj* obj, Context* ctx)
 	t_list* el = obj->vertices;
 	vertex* v;
 	int i = 0;
-	while (el)
-	{
+	while (el) {
 		v = (vertex*)el->content;
 		el = el->next;
 		buff[i] = v->x;
@@ -42,27 +42,52 @@ static int obj_to_vertex_buffer(Obj* obj, Context* ctx)
 		buff[i + 2] = v->z;
 		i++;	
 	}
-	ctx->vertex_buffer.content = buff;
-	ctx->vertex_buffer.size = nv * GL_FLOAT * 3;
+	ctx->vertex_data.content = buff;
+	ctx->vertex_data.size = nv * sizeof(GL_FLOAT) * 3;
 	return EXIT_SUCCESS;
 }
 
-static void init_context(Obj* obj, Context *ctx)
+static int obj_to_index_data(Obj* obj, Context* ctx)
+{
+	size_t nv = ft_lstsize(obj->faces);
+	uint32_t* buff = ft_calloc(1, nv * sizeof(GL_INT) * 3); // times 3 causes 3 float attribute per vertex
+
+	if(buff == NULL)
+		return EXIT_FAILURE;
+	t_list* el = obj->faces;
+	face* f;
+	int i = 0;
+	while (el)
+	{
+		f = (face*)el->content;
+		el = el->next;
+		buff[i] = f->v1;
+		buff[i + 1] = f->v2;
+		buff[i + 2] = f->v3;
+		i++;	
+	}
+	ctx->index_data.content = buff;
+	ctx->index_data.size = nv * sizeof(GL_INT) * 3;
+	return EXIT_SUCCESS;
+}
+
+static void init_context(Obj* obj, GLFWwindow* window, Context *ctx)
 {
 	ctx->obj = obj;
-	ctx->vertex_buffer.content = NULL;
-	ctx->vertex_buffer.size = 0;
-	ctx->index_buffer.content = NULL;
-	ctx->index_buffer.size = 0;
+	ctx->window = window;
+	ctx->vertex_data.content = NULL;
+	ctx->vertex_data.size = 0;
+	ctx->index_data.content = NULL;
+	ctx->index_data.size = 0;
 
 }
 
 static void clear_context(Context* ctx)
 {
-	if (ctx->vertex_buffer.content)
-		free(ctx->vertex_buffer.content);
-	if (ctx->index_buffer.content)
-		free(ctx->index_buffer.content);
+	if (ctx->vertex_data.content)
+		free(ctx->vertex_data.content);
+	if (ctx->index_data.content)
+		free(ctx->index_data.content);
 }
 
 // Returns EXIT_FAILURE after printing msg on stderr and clearing context
@@ -74,11 +99,63 @@ static int render_error(const char* msg, Context* ctx)
 	return EXIT_FAILURE;
 }
 
+static int compile_shader(GLuint type, const char* const src, unsigned int* sid)
+{
+	*sid = glCreateShader(type);
+	glShaderSource(*sid, 1, &src, NULL);
+	glCompileShader(*sid);
+
+	int res;
+	glGetShaderiv(*sid, GL_COMPILE_STATUS, &res);
+	char infoLog[512]; // TODO change this 
+	glGetShaderInfoLog(*sid, 512, NULL, infoLog);
+	infoLog[511] = 0; // TODO very hacky
+	fprintf(stderr, "%s", infoLog);
+	return res == GL_FALSE ? EXIT_FAILURE : EXIT_SUCCESS;
+}
+
+static int create_shader_program()
+{
+	unsigned int program = glCreateProgram();
+
+	char* vertex = 
+		"#version 330 core\n"
+		"\n"
+		"layout(location = 0) in vec4 position;\n"
+		"\n"
+		"void main() {\n"
+		" gl_Position = position;\n"
+		"}\n";
+
+	char* fragment = 
+		"#version 330 core\n"
+		"\n"
+		"layout(location = 0) out vec4 color;\n"
+		"\n"
+		"void main() {\n"
+		" color = vec4(1.0, 0.0, 0.0, 1.0);\n"
+		"}\n";
+
+	unsigned int vs, fs;
+	if (compile_shader(GL_VERTEX_SHADER, (const char* const)vertex, &vs) == EXIT_SUCCESS &&
+		compile_shader(GL_FRAGMENT_SHADER, (const char* const)fragment, &fs) == EXIT_SUCCESS)
+	{
+		printf("Shader compilation successfull !\n");
+		glAttachShader(program, vs);
+		glAttachShader(program, fs);
+		glLinkProgram(program);
+		glValidateProgram(program);
+		glUseProgram(program);
+	}
+	glDeleteShader(vs); // TODO might crash ?
+	glDeleteShader(fs);
+	return EXIT_SUCCESS; // TODO error handling
+}
+
 int render(Obj* obj)
 {
 	// Init context
 	Context ctx;
-	init_context(obj, &ctx);
 
 	GLFWwindow* window = init_window();
         if (window == NULL)
@@ -88,8 +165,21 @@ int render(Obj* obj)
         if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
           return render_error("Cannot instantiate glad\n", &ctx);
 
-	if(obj_to_vertex_buffer(obj, &ctx))
+	init_context(obj, window, &ctx);
+
+	if(obj_to_vertex_data(obj, &ctx))
 		return EXIT_FAILURE;
+	if(obj_to_index_data(obj, &ctx))
+		return EXIT_FAILURE;
+
+	glGenBuffers(1, &ctx.buff_vertex);
+
+	glBindBuffer(GL_ARRAY_BUFFER, ctx.buff_vertex);
+	glBufferData(GL_ARRAY_BUFFER, ctx.vertex_data.size, ctx.vertex_data.content, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+	glEnableVertexAttribArray(0);
+	create_shader_program();
         render_loop(window);
 	clear_context(&ctx);
 	return EXIT_SUCCESS;
