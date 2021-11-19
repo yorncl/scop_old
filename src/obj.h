@@ -1,4 +1,5 @@
 #ifndef OBJ_H
+#define OBJ_H
 
 #include "../lib/libft/libft.h"
 

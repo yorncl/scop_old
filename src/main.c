@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.h"
+#include "render.h"
 
 void print_usage()
 {
@@ -17,6 +18,7 @@ int main(int ac, char** av)
 	Obj* obj = parse_file(av[1]);
 	if (obj == NULL)
 		return EXIT_FAILURE;
-	clear_obj(obj);
-	return EXIT_SUCCESS;
+	int r = render(obj);
+        clear_obj(obj);
+	return r == EXIT_FAILURE ? r : EXIT_SUCCESS;
 }
