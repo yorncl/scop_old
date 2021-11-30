@@ -1,13 +1,27 @@
+
+
 CFLAGS = -Wall -Wextra -Werror -fsanitize=address -g
 CC = gcc
 SRC = $(wildcard src/*.c)
-LDFLAGS=-ldl -lGL -lGLU -lglfw3 -lX11 -lXxf86vm -lXrandr -lpthread -lXi -lm
+LDFLAGS= -ldl -lm -L ./lib/libglfw3 -lglfw3
 HEADERS = $(wildcard src/*.h)
 OBJ = $(SRC:%.c=%.o)
 NAME = scop
 INC = ./include
 LIBFT = lib/libft/libft.a
 
+ifeq ($(OS),Windows_NT)
+	@echo Build not supported on Windows
+	exit 1
+else
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+        LDFLAGS += -lGL -lGLU -lglfw3 -lX11 -lXxf86vm -lXrandr -lpthread -lXi
+    endif
+    ifeq ($(UNAME_S),Darwin)
+        LDFLAGS += -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework Carbon
+    endif
+endif
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $^ -o $@ -I $(INC)

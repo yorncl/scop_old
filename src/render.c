@@ -4,11 +4,18 @@
 #include "shader.h"
 #include "render.h"
 
+static void glfw_error_callback(int code, const char* msg)
+{
+	fprintf(stderr, "GLFW ERROR %d : %s\n", code, msg);
+}
+
 static GLFWwindow* init_window()
 {
         glfwInit();
+	glfwSetErrorCallback(glfw_error_callback);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	return glfwCreateWindow(WINDOW_INIT_WIDTH, WINDOW_INIT_HEIGHT, "LearnOpenGL", NULL, NULL);
 }
@@ -136,7 +143,7 @@ static int create_shader_program()
 		" color = vec4(1.0, 0.0, 0.0, 1.0);\n"
 		"}\n";
 
-	unsigned int vs, fs;
+	unsigned int vs = 0, fs = 0;
 	if (compile_shader(GL_VERTEX_SHADER, (const char* const)vertex, &vs) == EXIT_SUCCESS &&
 		compile_shader(GL_FRAGMENT_SHADER, (const char* const)fragment, &fs) == EXIT_SUCCESS)
 	{
@@ -157,7 +164,8 @@ static int create_shader_program()
 		glUseProgram(program);
 	}
 	glDeleteShader(vs); // TODO might crash ?
-	glDeleteShader(fs);
+	if (fs)
+		glDeleteShader(fs);
 	return EXIT_SUCCESS; // TODO error handling
 }
 
@@ -165,6 +173,7 @@ int render(Obj* obj)
 {
 	// Init context
 	Context ctx;
+	memset(&ctx, 0, sizeof(Context));
 
 	GLFWwindow* window = init_window();
         if (window == NULL)

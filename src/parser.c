@@ -39,7 +39,7 @@ int parse_line(char *line, size_t lineNum, Obj* obj)
 	else if (strncmp("f ", line, 2) == 0)
 	{
 		face* f = ft_calloc(1, sizeof(face));
-		n = sscanf(line, " %c %lu %lu %lu  ", &tmp, &f->v1, &f->v2, &f->v3);
+		n = sscanf(line, " %c %llu %llu %llu  ", &tmp, &f->v1, &f->v2, &f->v3);
 		if (n != 4)
 		{
 			free(f);
