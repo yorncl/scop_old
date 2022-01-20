@@ -17,7 +17,17 @@ then
 	mkdir lib/libglfw3
 	mv glfw/lib-x86_64/* lib/libglfw3
 else
-	echo "must do the linux implementaion lol"
+	curl -L https://github.com/glfw/glfw/releases/download/3.3.5/glfw-3.3.5.zip -o glfw.zip && \
+	unzip glfw.zip &&\
+	mv glfw-3.3.5 glfw &&\
+	# Building and locally installing the lib
+	pushd . &&\
+	cd glfw &&\
+	cmake -S . -B build && cd build && make && \
+	popd
+	mkdir -p lib/libglfw3 &&\
+	mv glfw/include/* include/ &&\
+	mv glfw/build/src/libglfw3.a lib/libglfw3/
 fi
 
 

@@ -125,27 +125,14 @@ static int create_shader_program()
 {
 	unsigned int program = glCreateProgram();
 
-	char* vertex = 
-		"#version 330 core\n"
-		"\n"
-		"layout(location = 0) in vec4 position;\n"
-		"\n"
-		"void main() {\n"
-		" gl_Position = vec4(position.xyz, 1.0);\n"
-		"}\n";
-
-	char* fragment = 
-		"#version 330 core\n"
-		"\n"
-		"layout(location = 0) out vec4 color;\n"
-		"\n"
-		"void main() {\n"
-		" color = vec4(1.0, 0.0, 0.0, 1.0);\n"
-		"}\n";
+	Shader* vertex = load_shader("src/shaders/vertex.glsl");
+	Shader* fragment = load_shader("src/shaders/fragment.glsl"); // TODO a way to bundle assets after runtime 
+	if (vertex == NULL || fragment == NULL)
+		return EXIT_FAILURE;
 
 	unsigned int vs = 0, fs = 0;
-	if (compile_shader(GL_VERTEX_SHADER, (const char* const)vertex, &vs) == EXIT_SUCCESS &&
-		compile_shader(GL_FRAGMENT_SHADER, (const char* const)fragment, &fs) == EXIT_SUCCESS)
+	if (compile_shader(GL_VERTEX_SHADER, (const char* const)vertex->src, &vs) == EXIT_SUCCESS &&
+		compile_shader(GL_FRAGMENT_SHADER, (const char* const)fragment->src, &fs) == EXIT_SUCCESS)
 	{
 		printf("Shader compilation successfull !\n");
 		glAttachShader(program, vs);
@@ -166,6 +153,8 @@ static int create_shader_program()
 	glDeleteShader(vs); // TODO might crash ?
 	if (fs)
 		glDeleteShader(fs);
+	destroy_shader(vertex);
+	destroy_shader(fragment);
 	return EXIT_SUCCESS; // TODO error handling
 }
 
@@ -190,15 +179,26 @@ int render(Obj* obj)
 	if(obj_to_index_data(obj, &ctx))
 		return EXIT_FAILURE;
 	
-	GLuint VertexArrayID;
-	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
 
-	glGenBuffers(1, &ctx.buff_vertex);
-	glBindBuffer(GL_ARRAY_BUFFER, ctx.buff_vertex);
+	glGenVertexArrays(1, &ctx.VAO);
+	glGenBuffers(1, &ctx.VBO);
+
+	// binding the vertex array object and its buffer
+	glBindVertexArray(ctx.VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, ctx.VBO);
 	glBufferData(GL_ARRAY_BUFFER, ctx.vertex_data.size, ctx.vertex_data.content, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+
+	// faces
+	if(ctx.index_data.size > 0)
+	{
+		glGenBuffers(1, &ctx.EBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, ctx.index_data.size, ctx.index_data.content, GL_STATIC_DRAW);
+	}
+	// vertex attrib pointer
         glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
+
 	create_shader_program();
         render_loop(window);
 	clear_context(&ctx);

@@ -3,7 +3,7 @@
 CFLAGS = -Wall -Wextra -Werror -fsanitize=address -g
 CC = gcc
 SRC = $(wildcard src/*.c)
-LDFLAGS= -ldl -lm -L ./lib/libglfw3 -lglfw3
+LDFLAGS= -ldl -lm -L ./lib/libglfw3 -lglfw3 -L ./lib/libft -lft
 HEADERS = $(wildcard src/*.h)
 OBJ = $(SRC:%.c=%.o)
 NAME = scop
@@ -24,7 +24,7 @@ else
 endif
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $^ -o $@ -I $(INC)
+	$(CC) $(CFLAGS) -c $^ -o $@ -I $(INC) $(LDFLAGS)
 %/glad.o: %/glad.c
 	$(CC) $(CFLAGS) -c $^ -o $@ -I $(INC)
 

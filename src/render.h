@@ -16,8 +16,9 @@ typedef struct buff_st {
 typedef struct ctx_st {
 	Obj* obj;
 	GLFWwindow* window;
-	GLuint buff_vertex;
-	GLuint buff_index;
+	GLuint VAO;
+	GLuint VBO;
+	GLuint EBO;
 	buff_st vertex_data;
 	buff_st index_data;
 } Context;
