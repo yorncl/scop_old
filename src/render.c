@@ -3,6 +3,7 @@
 #include <string.h>
 #include "shader.h"
 #include "render.h"
+#include "stb_image.h"
 
 static void glfw_error_callback(int code, const char* msg)
 {
@@ -20,15 +21,16 @@ static GLFWwindow* init_window()
 	return glfwCreateWindow(WINDOW_INIT_WIDTH, WINDOW_INIT_HEIGHT, "LearnOpenGL", NULL, NULL);
 }
 
-static void render_loop(GLFWwindow* window, size_t count)
+static void render_loop(GLFWwindow* window, size_t count, unsigned int texture)
 {
 	printf("Here is the count : %lu\n", count);
 	while(!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
-		glDrawElements(GL_TRIANGLES, count /4, GL_UNSIGNED_INT, 0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glDrawElements(GL_TRIANGLES, count/4, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
-		glfwPollEvents();    
+		glfwPollEvents(); 
 	}
 }
 
@@ -162,8 +164,7 @@ static int create_shader_program()
 int render(Obj* obj)
 {
 	// Init context
-	Context ctx;
-	memset(&ctx, 0, sizeof(Context));
+	Context ctx; memset(&ctx, 0, sizeof(Context));
 
 	GLFWwindow* window = init_window();
         if (window == NULL)
@@ -189,7 +190,17 @@ int render(Obj* obj)
 	glBindBuffer(GL_ARRAY_BUFFER, ctx.VBO);
 	glBufferData(GL_ARRAY_BUFFER, ctx.vertex_data.size, ctx.vertex_data.content, GL_STATIC_DRAW);
 	// vertex attrib pointer
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 3, 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
+
+	// texture stuff
+	int width, height, nrChannels;
+	unsigned char *data = stbi_load("resources/cobble.jpg", &width, &height, &nrChannels, 0);
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
 
 	// faces
 	if(ctx.index_data.size > 0)
@@ -201,7 +212,7 @@ int render(Obj* obj)
         glEnableVertexAttribArray(0);
 
 	create_shader_program();
-        render_loop(window, ctx.index_data.size);
+        render_loop(window, ctx.index_data.size, texture);
 	clear_context(&ctx);
 	return EXIT_SUCCESS;
 }
