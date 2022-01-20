@@ -20,12 +20,13 @@ static GLFWwindow* init_window()
 	return glfwCreateWindow(WINDOW_INIT_WIDTH, WINDOW_INIT_HEIGHT, "LearnOpenGL", NULL, NULL);
 }
 
-static void render_loop(GLFWwindow* window)
+static void render_loop(GLFWwindow* window, size_t count)
 {
+	printf("Here is the count : %lu\n", count);
 	while(!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, count /4, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();    
 	}
@@ -187,6 +188,8 @@ int render(Obj* obj)
 	glBindVertexArray(ctx.VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, ctx.VBO);
 	glBufferData(GL_ARRAY_BUFFER, ctx.vertex_data.size, ctx.vertex_data.content, GL_STATIC_DRAW);
+	// vertex attrib pointer
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 3, 0);
 
 	// faces
 	if(ctx.index_data.size > 0)
@@ -195,12 +198,10 @@ int render(Obj* obj)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.EBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, ctx.index_data.size, ctx.index_data.content, GL_STATIC_DRAW);
 	}
-	// vertex attrib pointer
         glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
 
 	create_shader_program();
-        render_loop(window);
+        render_loop(window, ctx.index_data.size);
 	clear_context(&ctx);
 	return EXIT_SUCCESS;
 }
