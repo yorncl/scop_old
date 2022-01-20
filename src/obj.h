@@ -1,7 +1,7 @@
 #ifndef OBJ_H
 #define OBJ_H
 
-#include "../lib/libft/libft.h"
+#include <libft.h>
 
 typedef struct vertex_st{
 	double x;	
