@@ -21,19 +21,6 @@ static GLFWwindow* init_window()
 	return glfwCreateWindow(WINDOW_INIT_WIDTH, WINDOW_INIT_HEIGHT, "LearnOpenGL", NULL, NULL);
 }
 
-static void render_loop(GLFWwindow* window, size_t count, unsigned int texture)
-{
-	printf("Here is the count : %lu\n", count);
-	while(!glfwWindowShouldClose(window))
-	{
-		glClear(GL_COLOR_BUFFER_BIT);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glDrawElements(GL_TRIANGLES, count/4, GL_UNSIGNED_INT, 0);
-		glfwSwapBuffers(window);
-		glfwPollEvents(); 
-	}
-}
-
 static int obj_to_vertex_data(Obj* obj, Context* ctx)
 {
 	size_t nv = ft_lstsize(obj->vertices);
@@ -124,7 +111,7 @@ static int compile_shader(GLuint type, const char* const src, unsigned int* sid)
 	return res == GL_FALSE ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
-static int create_shader_program()
+static int create_shader_program(Context* ctx)
 {
 	unsigned int program = glCreateProgram();
 
@@ -158,7 +145,9 @@ static int create_shader_program()
 		glDeleteShader(fs);
 	destroy_shader(vertex);
 	destroy_shader(fragment);
-	return EXIT_SUCCESS; // TODO error handling
+	ctx->vertexShaderId = vs;
+	ctx->fragmentShaderId = fs;
+	return program; // TODO error handling
 }
 
 int render(Obj* obj)
@@ -211,8 +200,29 @@ int render(Obj* obj)
 	}
         glEnableVertexAttribArray(0);
 
-	create_shader_program();
-        render_loop(window, ctx.index_data.size, texture);
+	unsigned int shader_prog = create_shader_program(&ctx);
+
+	while(!glfwWindowShouldClose(window))
+	{
+
+
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+		glUseProgram(shader_prog);
+
+		float time = glfwGetTime();
+		unsigned int angleLoc = glGetUniformLocation(shader_prog, "angle");
+		glUniform1f(angleLoc, time);
+
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glDrawElements(GL_TRIANGLES, ctx.index_data.size/4, GL_UNSIGNED_INT, 0);
+
+		glfwSwapBuffers(window);
+		glfwPollEvents(); 
+	}
 	clear_context(&ctx);
 	return EXIT_SUCCESS;
 }

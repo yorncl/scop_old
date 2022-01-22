@@ -21,6 +21,8 @@ typedef struct ctx_st {
 	GLuint EBO;
 	buff_st vertex_data;
 	buff_st index_data;
+	unsigned int vertexShaderId;
+	unsigned int fragmentShaderId;
 } Context;
 
 int render(Obj* obj);
